@@ -31,6 +31,8 @@ multimodal-ai-sensor-fusion/
 └─ requirements.txt         # 핵심 라이브러리 목록
 ```
 
+---
+
 ## 🎯 핵심 목표 (Motivation)
 
 | 핵심 질문 | 접근 방식 | 배운 점 |
