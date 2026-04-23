@@ -60,46 +60,6 @@ multimodal-ai-sensor-fusion/
 
 ---
 
-## 🛠️ 핵심 구현 기술 (Technical Implementation)
-
-### 1. 합성 데이터 생성 (Synthetic Data Generation)
-
-| 항목 &emsp;&emsp;&emsp;&emsp; | 구현 내용 |
-| :--- | :--- |
-| **RGB 이미지** | NumPy로 32×32 픽셀 캔버스에 세 가지 도형(정사각형·원·링)을 클래스별 고유 색상으로 렌더링 후 가우시안 노이즈 추가 |
-| **LiDAR 깊이맵** | 도형 중심에서의 거리 함수로 깊이값을 계산, 물체 표면은 낮은 값·배경은 높은 값 부여 |
-| **3D 변환** | 방위각(Azimuth)·천정각(Zenith) 수식으로 깊이맵을 XYZ 좌표계 포인트 클라우드로 역변환 |
-
-### 2. 융합 아키텍처 (Fusion Architectures)
-
-| 모델 | 융합 위치 | 구조 설명 |
-| :--- | :---: | :--- |
-| **RGB-Only** | — | RGB 전용 CNN + 분류 헤드 (단일 모달 기준선) |
-| **LiDAR-Only** | — | LiDAR 전용 CNN + 분류 헤드 (단일 모달 기준선) |
-| **Early Fusion** | 픽셀 레벨 | RGB(3ch) + LiDAR(1ch) → 4채널 입력으로 합쳐 하나의 CNN 통과 |
-| **Late Fusion** | 예측 직전 | 두 인코더를 독립 학습 후, 128차원 임베딩을 연결(concat)하여 분류 |
-| **Intermediate Fusion** | 중간 피처맵 | 1차 컨볼루션 블록 이후 두 브랜치의 피처맵을 채널 방향으로 합쳐 후속 레이어 통과 |
-
-### 3. CLIP 스타일 대조학습 (Contrastive Pre-training)
-
-| 항목 &emsp;&emsp;&emsp;&emsp;&emsp;&emsp; | 구현 내용 |
-| :--- | :--- |
-| **데이터 쌍 생성** | FashionMNIST 이미지에 소벨 필터(Gx, Gy)를 적용해 에지 아웃라인 생성. 같은 인덱스 이미지-아웃라인이 양성 쌍 |
-| **손실 함수** | NT-Xent (Normalized Temperature-scaled Cross Entropy): 배치 내 대각선 쌍은 유사도를 높이고, 비대각선 쌍은 낮추는 대칭 교차 엔트로피 |
-| **임베딩 정규화** | L2 Normalization 적용 → 코사인 유사도를 내적 연산으로 단순화 |
-| **온도 파라미터** | `temperature` 를 학습 가능한 파라미터로 설정, 유사도 분포의 날카로움 자동 조절 |
-
-### 4. 크로스모달 프로젝터 (Cross-Modal Projector)
-
-| 항목 | 구현 내용 |
-| :--- | :--- |
-| **목표** | LiDAR 인코더의 임베딩을 RGB 인코더의 임베딩 공간으로 변환, 두 모달의 공통 표현 공간 학습 |
-| **구조** | `Linear(64→128) → GELU → Linear(128→64)` 2층 MLP |
-| **학습** | 프로젝션된 LiDAR 임베딩과 RGB 임베딩 간 MSE 손실 최소화 (RGB 인코더는 고정) |
-| **응용** | LLaVA·BLIP-2 등 최신 비전-언어 모델에서 비전 인코더를 LLM에 연결하는 방식과 동일한 원리 |
-
----
-
 ## 📊 실험 결과 (Results)
 
 ### 융합 모델 정확도 비교
@@ -110,7 +70,7 @@ multimodal-ai-sensor-fusion/
 | LiDAR-Only | LiDAR(1ch) | **92.3%** | 형태 정보만 포함, 노이즈에 다소 취약함 |
 | Early Fusion | 4ch concat | **100.0%** | 픽셀 레벨 융합 성능 최적화 달성 |
 | Late Fusion | 임베딩 concat | **100.0%** | 예측 직전 융합 성능 최적화 달성 |
-| **Intermediate Fusion** | **피처맵 concat** | **100.0%** | 중간 레벨 융합 성능 최적화 달성 |
+| Intermediate Fusion | 피처맵 concat | **100.0%** | 중간 레벨 융합 성능 최적화 달성 |
 | Random Baseline | — | 33.3% | 3-class random |
 
 > 데이터 특성상 RGB 정보의 신호가 강해 단일 모달 및 모든 융합 아키텍처에서 이상적인 100% 성능을 달성했습니다.
@@ -120,7 +80,7 @@ multimodal-ai-sensor-fusion/
 | 지표 | 측정 대상 | 결과 |
 | :---: | :--- | :---: |
 | Contrastive Loss (초기) | NT-Xent, FashionMNIST + Sobel | ~0.17 |
-| Contrastive Loss (최종) | 12 Epoch 학습 후 | **0.0089** (대폭 감소) |
+| Contrastive Loss (최종) | 12 Epoch 학습 후 | **0.0089** (약 95% 감소) |
 | Cosine Similarity (대각선) | 동일 클래스 이미지-아웃라인 쌍 | **0.72 ~ 0.85** 수준 상승 |
 | Projection MSE (최종) | LiDAR → RGB 임베딩 정렬 | **0.001634** (안정적 수렴) |
 
@@ -135,3 +95,13 @@ multimodal-ai-sensor-fusion/
 크로스모달 프로젝터를 설계하는 과정에서는 상이한 두 임베딩 공간을 물리적으로 억지로 병합하는 대신, 하나의 공간을 다른 공간의 표현 방식으로 번역하는 소형 네트워크의 중요성을 체감했습니다. 단순한 평균 제곱 오차(MSE) 손실만으로도 LiDAR 클러스터가 RGB 클러스터와 성공적으로 정렬되는 과정을 확인하며 LLaVA나 BLIP-2와 같은 최신 비전-언어 모델의 내부 메커니즘을 성공적으로 재현해 볼 수 있었습니다. 현재는 이를 가벼운 2층 MLP 구조로 구현하여 복잡한 표현력을 담아내기에는 한계가 있지만, 다음 프로젝트에서는 Q-Former(BLIP-2)나 Perceiver Resampler(Flamingo)와 같은 어텐션(Attention) 기반의 고도화된 프로젝터를 직접 구현하여 성능을 높여보고자 합니다.
 
 마지막으로, 이번 프로젝트는 실험의 통제와 빠른 실행 속도를 위해 자체 제작한 합성 데이터(Synthetic Data)와 소규모 CNN 모델을 사용했다는 점이 가장 큰 아쉬움으로 남습니다. 이로 인해 모델이 실환경의 복잡한 노이즈와 불규칙성을 얼마나 잘 일반화할 수 있을지는 충분히 검증하지 못했습니다. 따라서 다음 단계에서는 KITTI나 nuScenes와 같은 실제 자율주행 LiDAR 포인트 클라우드 데이터를 도입하고, PointNet++ 또는 3D Sparse CNN 기반의 강력한 LiDAR 전용 인코더를 적용하여 실제 산업 수준의 파이프라인을 구축할 계획입니다. 나아가 이러한 시각 및 공간 정보에 자연어 처리(NLP) 기술까지 결합한 삼중 모달 시스템으로 연구를 확장하여, 멀티모달 AI의 잠재력을 더욱 깊이 있게 파고들 계획입니다.
+
+---
+
+## 🔗 참고 자료 (References)
+
+- NVIDIA Deep Learning Institute — Multimodal AI Course
+- [CLIP: Learning Transferable Visual Models From Natural Language Supervision](https://arxiv.org/abs/2103.00020) (Radford et al., 2021)
+- [LLaVA: Visual Instruction Tuning](https://arxiv.org/abs/2304.08485) (Liu et al., 2023)
+- [BLIP-2: Bootstrapping Language-Image Pre-training](https://arxiv.org/abs/2301.12597) (Li et al., 2023)
+- [FashionMNIST Dataset](https://github.com/zalandoresearch/fashion-mnist) (Xiao et al., 2017)
