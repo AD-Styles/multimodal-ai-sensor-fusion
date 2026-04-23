@@ -1,4 +1,4 @@
-# 🌐 Multimodal AI: Sensor Fusion to Contrastive Pre-training
+# 🌐 Multimodal AI: Sensor Fusion to Contrastive Pre-training.
 
 ### RGB 카메라와 LiDAR 센서 데이터를 결합하여, 조기·후기·중간 융합 아키텍처를 비교하고 CLIP 스타일 대조학습과 크로스모달 프로젝션까지 단계별로 구현한 멀티모달 AI 포트폴리오.
 
