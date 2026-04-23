@@ -33,17 +33,8 @@ import torchvision
 import torchvision.transforms as transforms
 from sklearn.manifold import TSNE
 
-# ── Global Setup (캐글 환경 맞춤) ──────────────────────────────────────────
-import os
-import matplotlib.pyplot as plt
-
-
-# 캐글 작업 디렉토리 절대 경로 지정
-WORK_DIR = '/kaggle/working'
-PLOT_DIR = os.path.join(WORK_DIR, 'plots')
-DATA_DIR = os.path.join(WORK_DIR, 'data')
-
-os.makedirs(PLOT_DIR, exist_ok=True)
+# ── Global Setup ──────────────────────────────────────────────────────────────
+os.makedirs('plots', exist_ok=True)
 
 plt.rcParams['figure.dpi']    = 100
 plt.rcParams['axes.unicode_minus'] = False
@@ -154,32 +145,69 @@ plt.close()
 print("✅  plots/01_data_exploration.png")
 
 # ─── Plot 2: 3-D Point Cloud ─────────────────────────────────────────────────
-fig = plt.figure(figsize=(15, 5))
-fig.suptitle('LiDAR → 3-D Point Cloud Reconstruction',
-             fontsize=13, fontweight='bold')
+# 배경(depth ~10)을 제거하고 오브젝트 포인트만 강조하여 시각화
+BG_DEPTH   = 9.5    # 이 값 이상은 배경으로 간주
+OBJ_COLORS = ['#E74C3C', '#27AE60', '#2980B9']   # Cube / Sphere / Torus
+
+fig = plt.figure(figsize=(16, 6))
+fig.patch.set_facecolor('#1A1A2E')
+fig.suptitle('LiDAR → 3-D Point Cloud Reconstruction\n'
+             '(Object points highlighted · Background filtered)',
+             fontsize=13, fontweight='bold', color='white')
 
 for subplot_idx, label in enumerate(range(N_CLASSES)):
-    idx   = int((labels_all == label).nonzero(as_tuple=True)[0][0])
-    depth = lidar_all[idx][0].numpy()
+    # 같은 클래스 샘플 3개를 합쳐 포인트 수를 늘림
+    idxs  = (labels_all == label).nonzero(as_tuple=True)[0][:3]
+    ax    = fig.add_subplot(1, 3, subplot_idx + 1, projection='3d')
+    ax.set_facecolor('#0D1117')
 
-    yy, xx = np.mgrid[:IMG_SIZE, :IMG_SIZE]
-    x_flat = (xx / IMG_SIZE).flatten()
-    y_flat = (yy / IMG_SIZE).flatten()
-    z_flat = depth.flatten()
-    
-    # 수정된 부분: z_flat.ptp() 대신 np.ptp(z_flat) 또는 직접 최대/최소 차이 계산 사용
-    z_range = z_flat.max() - z_flat.min()
-    c_flat = plt.cm.plasma((z_flat - z_flat.min()) / (z_range + 1e-6))
+    for i, idx in enumerate(idxs):
+        depth = lidar_all[int(idx)][0].numpy()
+        yy, xx = np.mgrid[:IMG_SIZE, :IMG_SIZE]
 
-    ax = fig.add_subplot(1, 3, subplot_idx + 1, projection='3d')
-    ax.scatter(x_flat[::3], y_flat[::3], z_flat[::3],
-               c=c_flat[::3], marker='.', s=4)
-    ax.set_title(f'{CLASS_NAMES[label]} — Point Cloud', fontweight='bold')
-    ax.set_xlabel('X'); ax.set_ylabel('Y'); ax.set_zlabel('Depth')
-    ax.view_init(elev=28, azim=230)
+        # 오브젝트 포인트 (depth < BG_DEPTH)
+        obj_mask = depth.flatten() < BG_DEPTH
+        x_obj = (xx.flatten() / IMG_SIZE)[obj_mask]
+        y_obj = (yy.flatten() / IMG_SIZE)[obj_mask]
+        z_obj = depth.flatten()[obj_mask]
 
-plt.tight_layout()
-plt.savefig('plots/02_pointcloud_3d.png', bbox_inches='tight')
+        # 배경 포인트 (아주 연하게)
+        bg_mask = ~obj_mask
+        x_bg = (xx.flatten() / IMG_SIZE)[bg_mask]
+        y_bg = (yy.flatten() / IMG_SIZE)[bg_mask]
+        z_bg = depth.flatten()[bg_mask]
+
+        # 배경 — 반투명 회색 점 (sparse)
+        ax.scatter(x_bg[::8], y_bg[::8], z_bg[::8],
+                   c='#444466', alpha=0.08, s=3, marker='.')
+
+        # 오브젝트 — 클래스별 색상, 깊이로 명도 조절
+        if len(z_obj) > 0:
+            z_norm = (z_obj - z_obj.min()) / (z_obj.max() - z_obj.min() + 1e-6)
+            # 깊이가 낮을수록 (앞쪽) 밝게
+            alpha_vals = 0.6 + 0.4 * (1 - z_norm)
+            ax.scatter(x_obj, y_obj, z_obj,
+                       c=OBJ_COLORS[label], alpha=0.85,
+                       s=28, marker='o', edgecolors='none')
+
+    ax.set_title(f'{CLASS_NAMES[label]}', fontweight='bold',
+                 color='white', fontsize=12, pad=8)
+    ax.set_xlabel('X', color='#AAAAAA', fontsize=8)
+    ax.set_ylabel('Y', color='#AAAAAA', fontsize=8)
+    ax.set_zlabel('Depth', color='#AAAAAA', fontsize=8)
+    ax.tick_params(colors='#888888', labelsize=7)
+    ax.xaxis.pane.fill = False
+    ax.yaxis.pane.fill = False
+    ax.zaxis.pane.fill = False
+    ax.xaxis.pane.set_edgecolor('#333355')
+    ax.yaxis.pane.set_edgecolor('#333355')
+    ax.zaxis.pane.set_edgecolor('#333355')
+    ax.grid(True, alpha=0.15)
+    ax.view_init(elev=30, azim=210)
+
+plt.tight_layout(rect=[0, 0, 1, 0.93])
+plt.savefig('plots/02_pointcloud_3d.png', bbox_inches='tight',
+            facecolor=fig.get_facecolor())
 plt.close()
 print("✅  plots/02_pointcloud_3d.png")
 
@@ -627,7 +655,8 @@ for ep in range(PROJ_EPOCHS):
     print(f"  Epoch [{ep+1:02d}/{PROJ_EPOCHS}]  Projection MSE: {ep_loss/n_b:.6f}")
 print()
 
-# ─── Plot 8: Embedding space (RGB / LiDAR / projected) ───────────────────────
+# ─── Plot 8: Embedding space alignment (개선된 버전) ─────────────────────────
+# t-SNE를 RGB+Projected 공동 계산 → 같은 좌표계에서 정렬 여부를 직접 비교
 rgb_enc_proj.eval(); lidar_enc_proj.eval(); projector.eval()
 
 with torch.no_grad():
@@ -639,26 +668,68 @@ with torch.no_grad():
     l_emb_np = lidar_enc_proj(s_lidar).cpu().numpy()
     p_emb_np = projector(torch.tensor(l_emb_np).to(DEVICE)).cpu().numpy()
 
-tsne3    = TSNE(n_components=2, random_state=0, perplexity=15)
-joint_2d = tsne3.fit_transform(np.concatenate([r_emb_np, l_emb_np, p_emb_np]))
-r2d, l2d, p2d = joint_2d[:120], joint_2d[120:240], joint_2d[240:]
+# ── 공동 t-SNE: [RGB, Projected]를 동일 공간에 투영 (LiDAR before는 별도)
+tsne_joint = TSNE(n_components=2, random_state=42, perplexity=15)
+rp_2d = tsne_joint.fit_transform(np.concatenate([r_emb_np, p_emb_np]))
+r2d   = rp_2d[:120]      # RGB
+p2d   = rp_2d[120:]      # Projected LiDAR
 
-fig, axes = plt.subplots(1, 3, figsize=(16, 5))
+tsne_lidar = TSNE(n_components=2, random_state=42, perplexity=15)
+l2d = tsne_lidar.fit_transform(l_emb_np)  # LiDAR before (독립 좌표계)
+
+PAIR_COLORS = ['#E74C3C', '#27AE60', '#2980B9']
+MARKERS     = ['o', 's', '^']
+
+fig, axes = plt.subplots(1, 3, figsize=(18, 6))
 fig.suptitle('Cross-Modal Projection — Embedding Space Alignment',
-             fontsize=13, fontweight='bold')
+             fontsize=14, fontweight='bold')
 
-PAIR_COLORS = ['#C44E52', '#55A868', '#4C72B0']
-for ax, data_2d, title in zip(axes,
-                               [r2d, l2d, p2d],
-                               ['RGB Embeddings',
-                                'LiDAR Embeddings\n(before projection)',
-                                'LiDAR → Projected\n(after projection)']):
-    for ci, cn in enumerate(CLASS_NAMES):
-        mask = s_lbl == ci
-        ax.scatter(data_2d[mask, 0], data_2d[mask, 1],
-                   label=cn, color=PAIR_COLORS[ci], alpha=0.75, s=35)
-    ax.set_title(title, fontweight='bold');  ax.legend(fontsize=9)
-    ax.grid(True, alpha=0.2)
+# ① RGB Embeddings
+for ci, cn in enumerate(CLASS_NAMES):
+    mask = s_lbl == ci
+    axes[0].scatter(r2d[mask, 0], r2d[mask, 1],
+                    label=cn, color=PAIR_COLORS[ci],
+                    marker=MARKERS[ci], alpha=0.80, s=45, edgecolors='white', linewidths=0.4)
+axes[0].set_title('① RGB Embeddings', fontweight='bold', fontsize=11)
+axes[0].legend(fontsize=9); axes[0].grid(True, alpha=0.2)
+
+# ② LiDAR before projection (독립 t-SNE)
+for ci, cn in enumerate(CLASS_NAMES):
+    mask = s_lbl == ci
+    axes[1].scatter(l2d[mask, 0], l2d[mask, 1],
+                    label=cn, color=PAIR_COLORS[ci],
+                    marker=MARKERS[ci], alpha=0.80, s=45, edgecolors='white', linewidths=0.4)
+axes[1].set_title('② LiDAR Embeddings\n(before projection)', fontweight='bold', fontsize=11)
+axes[1].legend(fontsize=9); axes[1].grid(True, alpha=0.2)
+
+# ③ 오버레이: RGB(투명) + Projected(불투명) — 같은 t-SNE 공간
+for ci, cn in enumerate(CLASS_NAMES):
+    mask = s_lbl == ci
+    # RGB — 연한 배경으로
+    axes[2].scatter(r2d[mask, 0], r2d[mask, 1],
+                    color=PAIR_COLORS[ci], marker='o',
+                    alpha=0.22, s=60, edgecolors='none')
+    # Projected LiDAR — 진하게
+    axes[2].scatter(p2d[mask, 0], p2d[mask, 1],
+                    label=cn, color=PAIR_COLORS[ci], marker='D',
+                    alpha=0.85, s=38, edgecolors='white', linewidths=0.5)
+
+# 범례 설명 추가
+from matplotlib.lines import Line2D
+legend_elems = [
+    Line2D([0], [0], marker='o', color='w', markerfacecolor='gray',
+           markersize=9, alpha=0.3, label='RGB (reference)'),
+    Line2D([0], [0], marker='D', color='w', markerfacecolor='gray',
+           markersize=8, label='LiDAR → Projected'),
+] + [
+    Line2D([0], [0], marker='D', color='w', markerfacecolor=PAIR_COLORS[ci],
+           markersize=8, label=cn)
+    for ci, cn in enumerate(CLASS_NAMES)
+]
+axes[2].legend(handles=legend_elems, fontsize=8, loc='upper right')
+axes[2].set_title('③ LiDAR → Projected\n(overlaid with RGB reference)',
+                  fontweight='bold', fontsize=11)
+axes[2].grid(True, alpha=0.2)
 
 plt.tight_layout()
 plt.savefig('plots/08_cross_modal_projection.png', bbox_inches='tight')
