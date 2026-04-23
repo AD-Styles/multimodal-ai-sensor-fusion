@@ -47,16 +47,16 @@ multimodal-ai-sensor-fusion/
 
 | 단계 | 내용 | 시각화 결과 |
 | :---: | :--- | :--- |
-| **Section 1** | **합성 멀티모달 데이터 생성 및 탐색** — RGB 이미지 + LiDAR 깊이맵을 직접 생성. 큐브·구·토러스 세 가지 클래스 | <img src="plots/01_data_exploration.png" width="100%"> |
-| **Section 2** | **3D 포인트 클라우드 재구성** — LiDAR 깊이맵에서 배경 노이즈를 필터링하고, 객체 포인트를 3차원 좌표로 변환하여 기하학적 구조 추출 | <img src="plots/02_pointcloud_3d.png" width="100%"> |
-| **Section 3** | **융합 아키텍처 학습 곡선 비교** — 5개 모델의 검증 손실·정확도를 에폭별로 추적 | <img src="plots/03_fusion_training_curves.png" width="100%"> |
-| **Section 4** | **최종 정확도 비교** — 단일 모달 기준선 대비 각 융합 방식의 최종 정확도 | <img src="plots/04_fusion_accuracy_comparison.png" width="100%"> |
-| **Section 5** | **대조학습 데이터 준비** — FashionMNIST 원본 이미지와 소벨 에지 아웃라인, 학습 전 코사인 유사도 행렬 | <img src="plots/05_contrastive_data.png" width="100%"> |
-| **Section 6** | **CLIP 스타일 학습 결과** — NT-Xent 손실 곡선과 학습 후 유사도 행렬 (대각선이 가장 밝아야 정상) | <img src="plots/06_contrastive_results.png" width="100%"> |
-| **Section 7** | **임베딩 공간 t-SNE 시각화** — 학습된 이미지 인코더가 10개 클래스를 얼마나 분리하는지 확인 | <img src="plots/07_tsne_embeddings.png" width="100%"> |
-| **Section 8** | **크로스모달 프로젝션** — 투영된 LiDAR 임베딩을 원본 RGB 공간에 오버레이(Overlay)하여 공간 정렬(Alignment) 수준을 직접 증명 | <img src="plots/08_cross_modal_projection.png" width="100%"> |
-| **Section 9** | **프로젝터 학습 손실** — MSE 손실 수렴 확인 | <img src="plots/09_projection_loss.png" width="100%"> |
-| **Section 10** | **최종 요약 대시보드** — 정확도 막대 + 대조·프로젝션 이중 손실 곡선 | <img src="plots/10_final_summary.png" width="100%"> |
+| **Section 1** | **합성 멀티모달 데이터 생성 및 탐색** — RGB 이미지 + LiDAR 깊이맵을 직접 생성. 큐브·구·토러스 세 가지 클래스 | <img src="plots/01_data_exploration.png" width="100%"><br><sub>*(RGB 색상과 2D 깊이 맵의 형태적 특징 쌍 비교)*</sub> |
+| **Section 2** | **3D 포인트 클라우드 재구성** — LiDAR 깊이맵에서 배경 노이즈를 필터링하고, 객체 포인트를 3차원 좌표로 변환하여 기하학적 구조 추출 | <img src="plots/02_pointcloud_3d.png" width="100%"><br><sub>*(배경 노이즈를 제거하고 3D 공간에 객체를 명확히 재구성)*</sub> |
+| **Section 3** | **융합 아키텍처 학습 곡선 비교** — 5개 모델의 검증 손실·정확도를 에폭별로 추적 | <img src="plots/03_fusion_training_curves.png" width="100%"><br><sub>*(5가지 아키텍처의 손실 감소 및 정확도 수렴 과정)*</sub> |
+| **Section 4** | **최종 정확도 비교** — 단일 모달 기준선 대비 각 융합 방식의 최종 정확도 | <img src="plots/04_fusion_accuracy_comparison.png" width="100%"><br><sub>*(융합 아키텍처들의 100% 성능 달성 시각적 증명)*</sub> |
+| **Section 5** | **대조학습 데이터 준비** — FashionMNIST 원본 이미지와 소벨 에지 아웃라인, 학습 전 코사인 유사도 행렬 | <img src="plots/05_contrastive_data.png" width="100%"><br><sub>*(학습 전: 무작위 패턴을 띠는 초기 유사도 행렬)*</sub> |
+| **Section 6** | **CLIP 스타일 학습 결과** — NT-Xent 손실 곡선과 학습 후 유사도 행렬 (대각선이 가장 밝아야 정상) | <img src="plots/06_contrastive_results.png" width="100%"><br><sub>*(학습 후: 동일한 이미지-스케치 쌍의 정답 유사도가 뚜렷해짐)*</sub> |
+| **Section 7** | **임베딩 공간 t-SNE 시각화** — 학습된 이미지 인코더가 10개 클래스를 얼마나 분리하는지 확인 | <img src="plots/07_tsne_embeddings.png" width="100%"><br><sub>*(비지도 대조학습만으로 자발적으로 군집화된 임베딩 공간)*</sub> |
+| **Section 8** | **크로스모달 프로젝션** — 투영된 LiDAR 임베딩을 원본 RGB 공간에 오버레이(Overlay)하여 공간 정렬(Alignment) 수준을 직접 증명 | <img src="plots/08_cross_modal_projection.png" width="100%"><br><sub>*(RGB 참조 공간에 LiDAR 임베딩이 완벽하게 겹쳐진 정렬 결과)*</sub> |
+| **Section 9** | **프로젝터 학습 손실** — MSE 손실 수렴 확인 | <img src="plots/09_projection_loss.png" width="100%"><br><sub>*(투영 모델의 에러(MSE)가 안정적으로 0에 수렴하는 곡선)*</sub> |
+| **Section 10** | **최종 요약 대시보드** — 정확도 막대 + 대조·프로젝션 이중 손실 곡선 | <img src="plots/10_final_summary.png" width="100%"><br><sub>*(전체 벤치마크 지표와 손실 곡선을 한눈에 비교하는 대시보드)*</sub> |
 
 ---
 
