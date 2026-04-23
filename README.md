@@ -80,7 +80,7 @@ multimodal-ai-sensor-fusion/
 
 ### 3. CLIP 스타일 대조학습 (Contrastive Pre-training)
 
-| 항목 | 구현 내용 |
+| 항목 &emsp;&emsp;&emsp;&emsp;&emsp;&emsp; | 구현 내용 |
 | :--- | :--- |
 | **데이터 쌍 생성** | FashionMNIST 이미지에 소벨 필터(Gx, Gy)를 적용해 에지 아웃라인 생성. 같은 인덱스 이미지-아웃라인이 양성 쌍 |
 | **손실 함수** | NT-Xent (Normalized Temperature-scaled Cross Entropy): 배치 내 대각선 쌍은 유사도를 높이고, 비대각선 쌍은 낮추는 대칭 교차 엔트로피 |
