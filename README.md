@@ -48,7 +48,7 @@ multimodal-ai-sensor-fusion/
 | 단계 | 내용 | 시각화 결과 |
 | :---: | :--- | :--- |
 | **Section 1** | **합성 멀티모달 데이터 생성 및 탐색** — RGB 이미지 + LiDAR 깊이맵을 직접 생성. 큐브·구·토러스 세 가지 클래스 | <img src="plots/01_data_exploration.png" width="100%"> |
-| **Section 2** | **3D 포인트 클라우드 재구성** — LiDAR 깊이맵에서 배경 노이즈를 필터링하고, 객체 포인트를 3차원 좌표로 변환하여 기하학적 구조 추출 | <img src="plots/02_pointcloud_3d.jpg" width="100%"> |
+| **Section 2** | **3D 포인트 클라우드 재구성** — LiDAR 깊이맵에서 배경 노이즈를 필터링하고, 객체 포인트를 3차원 좌표로 변환하여 기하학적 구조 추출 | <img src="plots/02_pointcloud_3d.png" width="100%"> |
 | **Section 3** | **융합 아키텍처 학습 곡선 비교** — 5개 모델의 검증 손실·정확도를 에폭별로 추적 | <img src="plots/03_fusion_training_curves.png" width="100%"> |
 | **Section 4** | **최종 정확도 비교** — 단일 모달 기준선 대비 각 융합 방식의 최종 정확도 | <img src="plots/04_fusion_accuracy_comparison.png" width="100%"> |
 | **Section 5** | **대조학습 데이터 준비** — FashionMNIST 원본 이미지와 소벨 에지 아웃라인, 학습 전 코사인 유사도 행렬 | <img src="plots/05_contrastive_data.png" width="100%"> |
