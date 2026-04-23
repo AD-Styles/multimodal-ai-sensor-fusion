@@ -48,13 +48,13 @@ multimodal-ai-sensor-fusion/
 | 단계 | 내용 | 시각화 결과 |
 | :---: | :--- | :--- |
 | **Section 1** | **합성 멀티모달 데이터 생성 및 탐색** — RGB 이미지 + LiDAR 깊이맵을 직접 생성. 큐브·구·토러스 세 가지 클래스 | <img src="plots/01_data_exploration.png" width="100%"> |
-| **Section 2** | **3D 포인트 클라우드 재구성** — LiDAR 깊이맵의 각 픽셀을 방위각·천정각 수식으로 3차원 좌표로 변환하여 시각화 | <img src="plots/02_pointcloud_3d.png" width="100%"> |
+| **Section 2** | **3D 포인트 클라우드 재구성** — LiDAR 깊이맵에서 배경 노이즈를 필터링하고, 객체 포인트를 3차원 좌표로 변환하여 기하학적 구조 추출 | <img src="plots/02_pointcloud_3d.jpg" width="100%"> |
 | **Section 3** | **융합 아키텍처 학습 곡선 비교** — 5개 모델의 검증 손실·정확도를 에폭별로 추적 | <img src="plots/03_fusion_training_curves.png" width="100%"> |
 | **Section 4** | **최종 정확도 비교** — 단일 모달 기준선 대비 각 융합 방식의 최종 정확도 | <img src="plots/04_fusion_accuracy_comparison.png" width="100%"> |
 | **Section 5** | **대조학습 데이터 준비** — FashionMNIST 원본 이미지와 소벨 에지 아웃라인, 학습 전 코사인 유사도 행렬 | <img src="plots/05_contrastive_data.png" width="100%"> |
 | **Section 6** | **CLIP 스타일 학습 결과** — NT-Xent 손실 곡선과 학습 후 유사도 행렬 (대각선이 가장 밝아야 정상) | <img src="plots/06_contrastive_results.png" width="100%"> |
 | **Section 7** | **임베딩 공간 t-SNE 시각화** — 학습된 이미지 인코더가 10개 클래스를 얼마나 분리하는지 확인 | <img src="plots/07_tsne_embeddings.png" width="100%"> |
-| **Section 8** | **크로스모달 프로젝션** — RGB/LiDAR/프로젝션 후 임베딩 분포를 나란히 비교 | <img src="plots/08_cross_modal_projection.png" width="100%"> |
+| **Section 8** | **크로스모달 프로젝션** — 투영된 LiDAR 임베딩을 원본 RGB 공간에 오버레이(Overlay)하여 공간 정렬(Alignment) 수준을 직접 증명 | <img src="plots/08_cross_modal_projection.png" width="100%"> |
 | **Section 9** | **프로젝터 학습 손실** — MSE 손실 수렴 확인 | <img src="plots/09_projection_loss.png" width="100%"> |
 | **Section 10** | **최종 요약 대시보드** — 정확도 막대 + 대조·프로젝션 이중 손실 곡선 | <img src="plots/10_final_summary.png" width="100%"> |
 
@@ -67,10 +67,10 @@ multimodal-ai-sensor-fusion/
 | 모델 | 입력 | Val Accuracy | 비고 |
 | :---: | :---: | :---: | :--- |
 | RGB-Only | RGB(3ch) | **100.0%** | 색상/2D 형태만으로 완벽한 분류 |
-| LiDAR-Only | LiDAR(1ch) | **92.3%** | 형태 정보만 포함, 노이즈에 다소 취약함 |
+| LiDAR-Only | LiDAR(1ch) | **92.7%** | 형태 정보만 포함, 노이즈에 다소 취약함 |
 | Early Fusion | 4ch concat | **100.0%** | 픽셀 레벨 융합 성능 최적화 달성 |
 | Late Fusion | 임베딩 concat | **100.0%** | 예측 직전 융합 성능 최적화 달성 |
-| Intermediate Fusion | 피처맵 concat | **100.0%** | 중간 레벨 융합 성능 최적화 달성 |
+| **Intermediate Fusion** | **피처맵 concat** | **100.0%** | 중간 레벨 융합 성능 최적화 달성 |
 | Random Baseline | — | 33.3% | 3-class random |
 
 > 데이터 특성상 RGB 정보의 신호가 강해 단일 모달 및 모든 융합 아키텍처에서 이상적인 100% 성능을 달성했습니다.
